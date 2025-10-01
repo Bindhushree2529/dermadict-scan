@@ -25,10 +25,37 @@ const Index = () => {
       return;
     }
 
+    // Compress and resize image before processing
     const reader = new FileReader();
     reader.onloadend = () => {
-      setSelectedImage(reader.result as string);
-      setAnalysis(null);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Resize to max 1024px while maintaining aspect ratio
+        let width = img.width;
+        let height = img.height;
+        const maxSize = 1024;
+        
+        if (width > height && width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Convert to base64 with reduced quality
+        const compressedImage = canvas.toDataURL('image/jpeg', 0.8);
+        setSelectedImage(compressedImage);
+        setAnalysis(null);
+      };
+      img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
   };
